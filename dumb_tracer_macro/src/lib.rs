@@ -15,7 +15,7 @@ pub fn instrument(
     let argc = input.sig.inputs.len();
     let argv = input.sig.inputs.iter().enumerate().map(|(index, arg)| {
         let comma = if index + 1 < argc {
-            quote!(write!(handle, ", ").unwrap();)
+            quote!(write!(&mut handle, ", ").unwrap();)
         }
         else {
             quote!()
@@ -23,7 +23,7 @@ pub fn instrument(
         match arg {
             syn::FnArg::Receiver(_) => {
                 quote!(
-                    write!(handle, "self: ").unwrap();
+                    write!(&mut handle, "self: ").unwrap();
                     (&mut &self).maybe_debug_print(&mut handle);
                     #comma
                 )
@@ -31,7 +31,7 @@ pub fn instrument(
             syn::FnArg::Typed(typed) => {
                 let name = &typed.pat;
                 quote!(
-                    write!(handle, "{}: ", stringify!(#name)).unwrap();
+                    write!(&mut handle, "{}: ", stringify!(#name)).unwrap();
                     (&mut &#name).maybe_debug_print(&mut handle);
                     #comma
                 )
@@ -48,15 +48,16 @@ pub fn instrument(
         #vis #sig {
             use dumb_tracer::DumbTracerHelper as _;
             use std::io::Write as _;
-            let stderr = std::io::stderr();
-            let mut handle = stderr.lock();
-            write!(handle, "{}(", stringify!(#name)).unwrap();
+            let buffer: &mut [u8] = &mut [0; 1999999];
+            let mut handle = std::io::Cursor::new(buffer);
+            write!(&mut handle, "{}(", stringify!(#name)).unwrap();
             #argv
-            write!(handle, ")").unwrap();
+            write!(&mut handle, ")").unwrap();
             let res: #ty = #block;
-            write!(handle, " -> ").unwrap();
+            write!(&mut handle, " -> ").unwrap();
             (&mut &res).maybe_debug_print(&mut handle);
-            writeln!(handle, "").unwrap();
+            writeln!(&mut handle, "").unwrap();
+            std::io::stderr().write_all(handle.into_inner()).unwrap();
             res
         }
     )
