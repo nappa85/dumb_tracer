@@ -38,6 +38,10 @@ pub fn instrument(
             },
         }
     }).collect::<proc_macro2::TokenStream>();
+    let ty = match input.sig.output {
+        syn::ReturnType::Default => quote!(()),
+        syn::ReturnType::Type(_, ref t) => quote!(#t),
+    };
     let block = &input.block;
     quote!(
         #(#attrs) *
@@ -46,7 +50,7 @@ pub fn instrument(
             eprint!("{}(", stringify!(#name));
             #argv
             eprint!(")");
-            let res = #block;
+            let res: #ty = #block;
             eprint!(" -> ");
             (&mut &res).maybe_debug_print();
             res
