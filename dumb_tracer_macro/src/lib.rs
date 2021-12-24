@@ -15,7 +15,7 @@ pub fn instrument(
     let argc = input.sig.inputs.len();
     let argv = input.sig.inputs.iter().enumerate().map(|(index, arg)| {
         let comma = if index + 1 < argc {
-            quote!(eprint!(", ");)
+            quote!(write!(handle, ", ").unwrap();)
         }
         else {
             quote!()
@@ -23,16 +23,16 @@ pub fn instrument(
         match arg {
             syn::FnArg::Receiver(_) => {
                 quote!(
-                    eprint!("self: ");
-                    (&mut &self).maybe_debug_print();
+                    write!(handle, "self: ").unwrap();
+                    (&mut &self).maybe_debug_print(&mut handle).unwrap();
                     #comma
                 )
             },
             syn::FnArg::Typed(typed) => {
                 let name = &typed.pat;
                 quote!(
-                    eprint!("{}: ", stringify!(#name));
-                    (&mut &#name).maybe_debug_print();
+                    write!(handle, "{}: ", stringify!(#name)).unwrap();
+                    (&mut &#name).maybe_debug_print(&mut handle);
                     #comma
                 )
             },
@@ -47,12 +47,15 @@ pub fn instrument(
         #(#attrs) *
         #vis #sig {
             use dumb_tracer::DumbTracerHelper as _;
-            eprint!("{}(", stringify!(#name));
+            use std::io::Write as _;
+            let stderr = std::io::stderr();
+            let mut handle = stderr.lock();
+            write!(handle, "{}(", stringify!(#name)).unwrap();
             #argv
-            eprint!(")");
+            write!(handle, ")").unwrap();
             let res: #ty = #block;
-            eprint!(" -> ");
-            (&mut &res).maybe_debug_print();
+            write!(handle, " -> ").unwrap();
+            (&mut &res).maybe_debug_print(&mut handle);
             res
         }
     )
