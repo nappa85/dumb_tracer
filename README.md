@@ -25,3 +25,6 @@ This prints to stderr something like
 ```
 foo(bar: "bar") -> () 
 ```
+
+## Credits
+Thanks to @Rimpampa and @dodomorandi for the negative trait solution.
