@@ -50,7 +50,7 @@ pub fn instrument(
             use std::io::Write as _;
             let mut buffer: Vec<u8> = Vec::with_capacity(1999999);
             let mut handle = std::io::Cursor::new(&mut buffer);
-            write!(&mut handle, "{}(", stringify!(#name)).unwrap();
+            write!(&mut handle, "{}:{}::{}(", module_path!(), line!(), stringify!(#name)).unwrap();
             #argv
             write!(&mut handle, ")").unwrap();
             let res: #ty = #block;
