@@ -48,8 +48,8 @@ pub fn instrument(
         #vis #sig {
             use dumb_tracer::DumbTracerHelper as _;
             use std::io::Write as _;
-            let buffer: &mut [u8] = &mut [0; 1999999];
-            let mut handle = std::io::Cursor::new(buffer);
+            let mut buffer: Vec<u8> = Vec::with_capacity(1999999);
+            let mut handle = std::io::Cursor::new(&mut buffer);
             write!(&mut handle, "{}(", stringify!(#name)).unwrap();
             #argv
             write!(&mut handle, ")").unwrap();
