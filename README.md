@@ -27,4 +27,4 @@ foo(bar: "bar") -> ()
 ```
 
 ## Credits
-Thanks to @Rimpampa and @dodomorandi for the negative trait solution.
+Thanks to [@Rimpampa](https://github.com/Rimpampa) and [@dodomorandi](https://github.com/dodomorandi) for the negative trait solution.
