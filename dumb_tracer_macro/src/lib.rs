@@ -56,6 +56,7 @@ pub fn instrument(
             let res: #ty = #block;
             write!(handle, " -> ").unwrap();
             (&mut &res).maybe_debug_print(&mut handle);
+            writeln!(handle, "").unwrap();
             res
         }
     )
