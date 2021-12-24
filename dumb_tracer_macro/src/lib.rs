@@ -12,29 +12,44 @@ pub fn instrument(
     let vis = &input.vis;
     let sig = &input.sig;
     let name = &input.sig.ident;
-    let args = input.sig.inputs.iter().map(|arg| match arg {
-        syn::FnArg::Receiver(_) => {
-            quote!(
-                use dumb_tracer::DumbTracerHelper;
-                (&mut &self).maybe_debug_print();
-            )
-        },
-        syn::FnArg::Typed(typed) => {
-            let name = &typed.pat;
-            quote!(
-                use dumb_tracer::DumbTracerHelper;
-                (&mut &#name).maybe_debug_print();
-            )
-        },
+    let argc = input.sig.inputs.len();
+    let argv = input.sig.inputs.iter().enumerate().map(|(index, arg)| {
+        let comma = if index + 1 < argc {
+            quote!(eprint!(", ");)
+        }
+        else {
+            quote!()
+        };
+        match arg {
+            syn::FnArg::Receiver(_) => {
+                quote!(
+                    eprint!("self: ");
+                    (&mut &self).maybe_debug_print();
+                    #comma
+                )
+            },
+            syn::FnArg::Typed(typed) => {
+                let name = &typed.pat;
+                quote!(
+                    eprint!("{}: ", stringify!(#name));
+                    (&mut &#name).maybe_debug_print();
+                    #comma
+                )
+            },
+        }
     }).collect::<proc_macro2::TokenStream>();
     let block = &input.block;
     quote!(
         #(#attrs) *
         #vis #sig {
+            use dumb_tracer::DumbTracerHelper as _;
             eprint!("{}(", stringify!(#name));
-            #args
-            eprint!(")\n");
-            #block
+            #argv
+            eprint!(")");
+            let res = #block;
+            eprint!(" -> ");
+            (&mut &res).maybe_debug_print();
+            res
         }
     )
     .into()
