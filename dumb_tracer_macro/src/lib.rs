@@ -24,7 +24,7 @@ pub fn instrument(
             syn::FnArg::Receiver(_) => {
                 quote!(
                     write!(handle, "self: ").unwrap();
-                    (&mut &self).maybe_debug_print(&mut handle).unwrap();
+                    (&mut &self).maybe_debug_print(&mut handle);
                     #comma
                 )
             },
